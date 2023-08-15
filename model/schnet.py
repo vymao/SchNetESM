@@ -129,11 +129,6 @@ class SchNet(torch.nn.Module):
             atomic_mass = torch.from_numpy(ase.data.atomic_masses)
             self.register_buffer('atomic_mass', atomic_mass)
 
-        # Support z == 0 for padding atoms so that their embedding vectors
-        # are zeroed and do not receive any gradients.
-        self.embedding = Embedding(100, hidden_channels, padding_idx=0) + self.esm_embeddings
-
-
         if interaction_graph is not None:
             self.interaction_graph = interaction_graph
         else:
@@ -162,7 +157,6 @@ class SchNet(torch.nn.Module):
 
     def reset_parameters(self):
         r"""Resets all learnable parameters of the module."""
-        self.embedding.reset_parameters()
         for interaction in self.interactions:
             interaction.reset_parameters()
         torch.nn.init.xavier_uniform_(self.lin1.weight)
@@ -184,7 +178,7 @@ class SchNet(torch.nn.Module):
                 to a separate molecule with shape :obj:`[num_atoms]`.
                 (default: :obj:`None`)
         """
-        batch = torch.zeros_like(z) if batch is None else batch
+        batch = torch.zeros_like(pos[:,0]) if batch is None else batch
 
         h = Embedding.from_pretrained(esm_embeddings)
         edge_index, edge_weight = self.interaction_graph(pos, batch)
@@ -197,18 +191,8 @@ class SchNet(torch.nn.Module):
         h = self.act(h)
         h = self.lin2(h)
 
-        if self.dipole:
-            # Get center of mass.
-            mass = self.atomic_mass[z].view(-1, 1)
-            M = self.sum_aggr(mass, batch, dim=0)
-            c = self.sum_aggr(mass * pos, batch, dim=0) / M
-            h = h * (pos - c.index_select(0, batch))
-
         if not self.dipole and self.mean is not None and self.std is not None:
             h = h * self.std + self.mean
-
-        if not self.dipole and self.atomref is not None:
-            h = h + self.atomref(z)
 
         out = self.readout(h, batch, dim=0)
 

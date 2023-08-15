@@ -11,7 +11,18 @@ from torch_geometric.data import Data
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
-def createDataList(positions: dict, embeddings: dict, labels: dict) -> torch_geometric.DataLoader: 
+def createDataList(positions: dict, embeddings: dict, labels: dict) -> list: 
+    """
+    This function creates the list of Data objects for training.
+
+    Parameters: 
+        positions
+        embeddings
+        labels
+
+    Returns: 
+        data_list - A list of Data objects, one for each protein.
+    """
     data_list = []
     for idx, protein in enumerate(positions.keys()): 
         pos, emb, y = positions[protein], embeddings[protein], labels[protein]
@@ -37,7 +48,7 @@ def readLabels(path: str) -> dict:
 
     return labels
 
-def readData(pdb_path: str, embed_path: str) -> Tuple(dict): 
+def readData(pdb_path: str, embed_path: str) -> Tuple[dict]: 
     """
     This function reads in the PDB files and returns the corresponding sequence lengths for each chain. 
 
@@ -65,8 +76,11 @@ def readData(pdb_path: str, embed_path: str) -> Tuple(dict):
         for chain in model.get_chains(): 
             # Get the C-alpha positions for this chain.
             for residue in chain.get_residues(): 
-                c_alpha = list(residue['CA'].get_vector())
-                positions[protein].append(c_alpha)
+                c_alpha = torch.Tensor([list(residue['CA'].get_vector())])
+                if protein in positions: 
+                    positions[protein] = torch.concat([positions[protein], c_alpha], dim = 0)
+                else: 
+                    positions[protein] = c_alpha
 
 
             prot_chain_id = protein + ':' + chain.id 
