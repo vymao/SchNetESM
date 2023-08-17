@@ -9,7 +9,7 @@ from torch_geometric.loader import DataLoader
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
-def train(args: argparse.Namespace, loader: DataLoader): 
+def train(args: argparse.Namespace, loader: DataLoader) -> None: 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = SchNet(
             hidden_channels=args.hidden_channels,
@@ -21,7 +21,7 @@ def train(args: argparse.Namespace, loader: DataLoader):
             readout=args.readout,
         ).to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, weight_decay=5e-4)
     critereon = torch.nn.MSELoss()
 
     for epoch in range(args.epochs):
