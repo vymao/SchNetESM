@@ -12,3 +12,26 @@ This model makes several underlying modifications and assumptions to the origina
 1. Given the likelihood of few samples for large proteins, we do not utilize every atom in the protein for prediction. Rather, we focus on the C-alpha atoms as representations for the corresponding residues, as this should provide a good correlation to understanding residue-level potential energy and prevent overfitting.
 2. Because of (1), and because we are utilizing ESM embeddings, we do not utilize nuclear charge information for computing potentials. It is probable that most energetic interactions between proteins can be learned at the residue level.
 
+### Running/Training
+The `run.py` is a script provided to run and train this model. The command is as follows: 
+
+```
+usage: python run.py [-h]
+                  [--hidden_channels NUMBER_OF_HIDDEN_CHANNELS]
+                  [--num_filters  NUM_FILTERS]
+                  [--cutoff INTERACTION_DISTANCE_CUTOFF]
+                  [--num_interactions NUMBER_OF_INTERACTION_BLOCKS]
+                  [--max_neighbors MAXIMUM_NUMBER_OF_NEIGBORS]
+                  [--readout AGGREGATION_READOUT]
+                  [--batch_size]
+                  [--epochs]
+                  [--log_interval]
+                  [--esm_embed_path]
+                  [--pdb_path]
+                  [--labels_file]
+
+required arguments:
+  esm_embed_path        Path to the directory of ESM embeddings
+  pdb_path              Path to the directory of PDB files
+  labels_file           Path to the file containing labels
+```
